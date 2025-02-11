@@ -1,0 +1,93 @@
+name: Split Fonts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: get the fonts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4.2.0
+        with: 
+          node-version: '>=18.0.0'
+          registry-url: https://registry.npmjs.org
+
+      - name: Download fonts
+        id: down
+        uses: robinraju/release-downloader@v1.8
+        with:
+          repository: lxgw/LxgwBright-Code
+          latest: true
+          fileName: "LxgwBrightCode.7z"
+          out-file-path: "tmp"
+      
+      - name: Setup Environment
+        run: |
+          # 安装必要的工具
+          npm install cn-font-split@6 -g
+
+          # 清理旧文件
+          rm -rf ./fonts/
+          rm -rf ./*.css
+          rm -rf ./VERSION
+
+      - name: Split fonts
+        run: |
+          7z e ./tmp/LxgwBrightCode.7z -o./tmp/
+          
+          for file in $(echo "$(ls ./tmp)" | grep -i '\.ttf$')
+          do 
+            # 文件符合 (lxgwbrightcode)-(extralight|light|regular|空)(italic|空).ttf 的格式
+            # 我们将其改写为 (lxgwbrightcode)-(extralight|light|regular|空)-(italic|空).ttf 的格式
+            font_name=$(echo "$file" | tr '[:upper:]' '[:lower:]' | sed -E 's/(.*)-(extralight|light|regular)?(italic)?\.ttf/\1-\2-\3/')
+            # 会出现如lxgwbrightcode-extralight-的情况, 即(italic|空)选中为空时的情况， 因此删除末尾可能出现的-
+            font_name=$(echo "$font_name" | sed -E 's/(.*)-$/\1/')
+            # 还会出现如lxgwbrightcode--italic的情况, 即(extralight|light|regular|空)选中为空的情况, 将空修正为regular
+            # 最后得到的结果是lxgwbrightcode-regular-italic.ttf
+            font_name=$(echo "$font_name" | sed -E 's/(.*-)-(\w+)$/\1regular-\2/')
+
+
+            case "$font_name" in
+              *regular*)
+                font_weight="400"
+                font_name=${font_name/regular/400}
+                ;;
+              *extralight*)
+                font_weight="200"
+                font_name=${font_name/extralight/200}
+                ;;
+              *light*)
+                font_weight="300"
+                font_name=${font_name/light/300}
+                ;;
+            esac
+
+            cn-font-split -i=./tmp/$file -o=./fonts/$font_name --renameOutputFont='[index][ext]' --css.fontWeight=$font_weight
+
+            # 更好看一点？
+            mv ./fonts/$font_name/result.css  ./fonts/$font_name/style.css
+
+            # 将生成的css文件统一引入到一个文件中, 便于一次性引入
+            echo "@import url('./fonts/$font_name/style.css');" >> ./style.css
+            # 最终我们能获取到 400.css 400-italic.css 这种
+            variable_css_name="${font_name#*-}.css"
+            echo "@import url('./fonts/$font_name/style.css');" >> $variable_css_name
+          done
+
+          echo "${{ steps.down.outputs.tag_name }}" >> VERSION
+          rm -rf ./tmp/
+
+      - name: Auto Minify
+        uses: nizarmah/auto-minify@v2.1.1
+        with:
+          overwrite: true
+
+        # Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "update ${{ steps.down.outputs.tag_name }}"
+          tagging_message: "${{ steps.down.outputs.tag_name }}"

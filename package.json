@@ -1,0 +1,30 @@
+{
+    "name": "@joshuasu/lxgwbright-code-web",
+    "version": "2.602",
+    "description": "Web font package for LXGW Bright Code",
+    "main": "style.css",
+    "style": "style.css",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sujoshua/LxgwBright-Code-web.git"
+    },
+    "files": [
+        "fonts",
+        "*.css",
+        "*.css",
+        "VERSION"
+    ],
+    "keywords": [
+        "lxgwbright-code",
+        "cjk",
+        "font",
+        "webfont",
+        "css"
+    ],
+    "author": "JoshuaSu <i@joshua.su>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/sujoshua/LxgwBright-Code-web/issues"
+    },
+    "homepage": "https://github.com/sujoshua/LxgwBright-Code-web"
+}
