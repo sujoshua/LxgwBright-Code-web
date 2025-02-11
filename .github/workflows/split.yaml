@@ -38,7 +38,7 @@ jobs:
       - name: Split fonts
         run: |
           7z e ./tmp/LxgwBrightCode.7z -o./tmp/
-          
+
           for file in $(echo "$(ls ./tmp)" | grep -i '\.ttf$')
           do 
             # 文件符合 (lxgwbrightcode)-(extralight|light|regular|空)(italic|空).ttf 的格式
@@ -85,6 +85,20 @@ jobs:
         uses: nizarmah/auto-minify@v2.1.1
         with:
           overwrite: true
+      
+      - name: Update package.json
+        run: |
+          # update version
+          VER=$(cat VERSION)
+          NORMALIZED_VERSION=$(echo $VER | sed 's/^v//' | awk -F. '{if($3==null) print$1"."$2".0"; else print$0}')
+          npm version $NORMALIZED_VERSION --no-git-tag-version
+      
+      - name: Publish to npm 
+        run: |
+          npm publish --access public
+        env: 
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
 
         # Commit all changed files back to the repository
       - uses: stefanzweifel/git-auto-commit-action@v5
