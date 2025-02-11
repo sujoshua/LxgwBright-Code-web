@@ -1,6 +1,6 @@
 {
     "name": "@joshuasu/lxgwbright-code-web",
-    "version": "2.602",
+    "version": "2.611.0",
     "description": "Web font package for LXGW Bright Code",
     "main": "style.css",
     "style": "style.css",
